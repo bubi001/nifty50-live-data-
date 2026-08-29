@@ -1,32 +1,33 @@
 import os
+import yfinance as yf
 import pandas as pd
-import requests
-from datetime import datetime
 
-# Fetch live Nifty 50 data from a free public endpoint
-url = "https://yahoo.com"
-headers = {'User-Agent': 'Mozilla/5.0'}
-response = requests.get(url, headers=headers)
-data=response.json()
-# Extract real-time metrics safely
-meta = response['chart']['result'][0]['meta']
-price = round(meta['regularMarketPrice'], 2)
-prev_close = meta['previousClose']
-change = round(price - prev_close, 2)
-pct_change = round((change / prev_close) * 100, 2)
-timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def fetch_nifty_50():
+    try:
+        print("🔗 Connecting to Yahoo Finance API...")
+        # ^NSEI is the exact Yahoo ticker for Nifty 50
+        nifty = yf.Ticker("^NSEI")
+        
+        # Period '1d' with interval '1m' forces live/latest intraday rows
+        df = nifty.history(period="1d", interval="1m")
+        
+        if df.empty:
+            print("⚠️ The layout returned empty rows! Check if the market is closed or if yfinance needs an update.")
+            return
+            
+        print("🚀 Success! Data rows retrieved:")
+        print(df.tail()) # Prints the latest rows to your GitHub Action logs
+        
+        # CRITICAL: Yahoo puts the timestamp in the index. 
+        # Resetting the index turns it into a row column so your CSV isn't just headers.
+        df.reset_index(inplace=True)
+        
+        # Save payload to file
+        df.to_csv("nifty50_live.csv", index=False)
+        print("💾 Saved rows to nifty50_live.csv")
+        
+    except Exception as e:
+        print(f"❌ Automation failed due to error: {str(e)}")
 
-# Create a new row of data
-new_data = pd.DataFrame([[timestamp, "Nifty 50", price, change, pct_change]], 
-                        columns=['Timestamp', 'Index', 'Price', 'Change', 'Percent_Change'])
-file_path = 'nifty50.csv'
-# Append to existing file or create a new one if deleted
-
-if os.path.exists(file_path):
-    df = pd.read_csv(file_path)
-    df = pd.concat([df, new_data], ignore_index=True)
-else:
-    df = new_data
-
-# Save back to your CSV
-df.to_csv(file_path, index=False)
+if __name__ == "__main__":
+    fetch_nifty_50()
