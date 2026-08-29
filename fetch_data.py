@@ -8,7 +8,7 @@ def fetch_nifty_50():
         # ^NSEI is the exact Yahoo ticker for Nifty 50
         nifty = yf.Ticker("^NSEI")
         
-        # Period '1d' with interval '1m' forces live/latest intraday rows
+        # Period '5d' with interval '1m' forces live/latest intraday rows
         df = nifty.history(period="1d", interval="1m")
         
         if df.empty:
