@@ -1,0 +1,17 @@
+name: NSE Data Update
+
+on:
+  schedule:
+    - cron: "30 13 * * 1-5"   # Run daily at 7 PM IST
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: pip install requests pandas openpyxl
+      - run: python scripts/data_update.py
